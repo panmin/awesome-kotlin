@@ -1,0 +1,123 @@
+apply from: 'constant.gradle'
+
+/**
+ * gradle公共方法
+ */
+
+//依赖库远程地址
+def repos = {
+    repositories ->
+        repositories.jcenter() { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
+        repositories.maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
+        repositories.maven { url "http://objectbox.net/beta-repo/" }//objectbox数据库专用
+        repositories.maven { url "http://nexus2.tingyun.com/nexus/content/repositories/snapshots/" }//听云专用
+        repositories.mavenCentral()
+        repositories.google()
+        repositories.maven {
+            url 'https://maven.google.com/'
+            name 'Google'
+        }
+        repositories.maven { url 'https://jitpack.io' }
+}
+
+ext.repos = repos
+
+
+//android闭包函数封装
+def androidDefaultConfig = {
+    extension ->
+        def isApp = false //是否是app工程
+        def isUseKotlin = false //是否使用kotlin
+        def isUseKAPT = false //是否使用kotlin-kapt
+        def plugins = extension.plugins
+        for (def plugin in plugins) {
+            println(plugin.class.getSimpleName())
+            if (plugin.class.getSimpleName() == "AppPlugin") {
+                isApp = true
+            } else if (plugin.class.getSimpleName() == "KotlinAndroidPluginWrapper") {
+                isUseKotlin = true
+            } else if (plugin.class.getSimpleName() == 'Kapt3GradleSubplugin') {
+                isUseKAPT = true
+            }
+        }
+        println("isApp=$isApp,isUseKotlin=$isUseKotlin")
+
+        extension.android {
+            compileSdkVersion build.compileSdkVersion
+            defaultConfig {
+                vectorDrawables.useSupportLibrary = true
+                minSdkVersion build.minSdkVersion
+                targetSdkVersion build.targetSdkVersion
+                if (isApp) {
+                    applicationId build.applicationId
+                }
+                versionCode build.versionCode
+                versionName build.versionName
+
+                testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+                if (!isUseKotlin) {
+                    javaCompileOptions {
+                        annotationProcessorOptions {
+                            arguments = [moduleName: extension.getName()]
+                            includeCompileClasspath = true
+                        }
+                    }
+                }
+            }
+
+            signingConfigs {
+                release {
+                    v2SigningEnabled true
+                    v1SigningEnabled true
+                    storeFile extension.file("kotlin.jks")
+                    storePassword "awesomekotlin"
+                    keyAlias "kotlin"
+                    keyPassword "awesomekotlin"
+                }
+            }
+
+            buildTypes {
+                debug {
+                    debuggable true
+                    multiDexEnabled true
+                    shrinkResources false
+                    zipAlignEnabled false
+                    minifyEnabled false
+                    proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+                }
+
+                release {
+                    debuggable false
+                    multiDexEnabled true
+                    signingConfig signingConfigs.release
+                    if (isApp) {//Resource shrinker cannot be used for libraries.
+                        shrinkResources true
+                    }
+                    zipAlignEnabled true
+                    minifyEnabled true
+                    proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+                }
+            }
+
+            compileOptions {
+                sourceCompatibility build.javaVersion
+                targetCompatibility build.javaVersion
+            }
+        }
+        extension.dependencies {
+            implementation fileTree(include: ['*.jar', '*.aar'], dir: extension.file('libs'))
+            testImplementation 'junit:junit:4.12'
+            androidTestImplementation 'androidx.test:runner:1.2.0'
+            androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+        }
+
+        if (isUseKotlin && isUseKAPT) {
+            extension.kapt {
+                arguments {
+                    arg("AROUTER_MODULE_NAME", project.getName())
+                }
+            }
+        }
+}
+ext.androidDefaultConfig = androidDefaultConfig
