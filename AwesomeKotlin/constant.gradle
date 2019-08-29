@@ -27,8 +27,8 @@ ext.kotlin = kotlin
 
 //classpath依赖库
 def classpathDep = [
-        'gradle'     : 'com.android.tools.build:gradle:3.4.1',
-        'kotlin'     : kotlin.plugin,
+        'gradle': 'com.android.tools.build:gradle:3.4.1',
+        'kotlin': kotlin.plugin,
 ]
 ext.classpathDep = classpathDep
 
@@ -36,14 +36,16 @@ ext.classpathDep = classpathDep
 //第三方依赖库
 def dep = [
         //android-support
-        "appcompat"               : "com.android.support:appcompat-v7:28.0.0",
-        "design"                  : "com.android.support:design:28.0.0",
-        "recyclerview"            : "com.android.support:recyclerview-v7:28.0.0",
-        "cardview"                : "com.android.support:cardview-v7:28.0.0",
-        "constraintlayout"        : "com.android.support.constraint:constraint-layout:1.1.3",
+        "appcompat"       : "com.android.support:appcompat-v7:28.0.0",
+        "design"          : "com.android.support:design:28.0.0",
+        "recyclerview"    : "com.android.support:recyclerview-v7:28.0.0",
+        "cardview"        : "com.android.support:cardview-v7:28.0.0",
+        "constraintlayout": "com.android.support.constraint:constraint-layout:1.1.3",
 
         // multidex
-        "multidex"                : "com.android.support:multidex:1.0.3",
+        "multidex"        : "com.android.support:multidex:1.0.3",
+
+        "coroutine"       : "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.1",
 
 ]
 ext.dep = dep

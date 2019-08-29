@@ -112,200 +112,200 @@ Android studio中`kotlin bytecode`工具使用：
 
   下面我们来看看`kotlin`帮我们做了什么，才使得代码变得这么**`简洁`**
 
-  #### 2.1 Metadata注解源码解析
+#### 2.1 Metadata注解源码解析
 
-  我们跟进metadata的源码看看，这个东西是做什么的
+我们跟进metadata的源码看看，这个东西是做什么的
 
-  ```kotlin
-  package kotlin
-  
-  @Retention(AnnotationRetention.RUNTIME)
-  @Target(AnnotationTarget.CLASS)
-  @SinceKotlin("1.3")
-  public annotation class Metadata(
-      @get:JvmName("k")
-      val kind: Int = 1,
-  
-      @get:JvmName("mv")
-      val metadataVersion: IntArray = [],
-  
-      @get:JvmName("bv")
-      val bytecodeVersion: IntArray = [],
-  
-      @get:JvmName("d1")
-      val data1: Array<String> = [],
-  
-      @get:JvmName("d2")
-      val data2: Array<String> = [],
-  
-      @get:JvmName("xs")
-      val extraString: String = "",
-  
-      @SinceKotlin("1.2")
-      @get:JvmName("pn")
-      val packageName: String = "",
-  
-      @SinceKotlin("1.1")
-      @get:JvmName("xi")
-      val extraInt: Int = 0
-  )
+```kotlin
+package kotlin
+
+@Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.CLASS)
+@SinceKotlin("1.3")
+public annotation class Metadata(
+    @get:JvmName("k")
+    val kind: Int = 1,
+
+    @get:JvmName("mv")
+    val metadataVersion: IntArray = [],
+
+    @get:JvmName("bv")
+    val bytecodeVersion: IntArray = [],
+
+    @get:JvmName("d1")
+    val data1: Array<String> = [],
+
+    @get:JvmName("d2")
+    val data2: Array<String> = [],
+
+    @get:JvmName("xs")
+    val extraString: String = "",
+
+    @SinceKotlin("1.2")
+    @get:JvmName("pn")
+    val packageName: String = "",
+
+    @SinceKotlin("1.1")
+    @get:JvmName("xi")
+    val extraInt: Int = 0
+)
+```
+
+从源码中可以看出，这个注解是专属于`kotlin`的（java是没有这个注解的），metadata属于`运行时注解`而且是针对`class`的注解；为了减少字符串所占的长度为每个属性设置了`JvmName`简称，下面来看下每个属性都是代表什么含义。
+
+* **kind**：简称`k`，Int类型，表示kotlin文件的类型
+
+  * 1：Class表示`class`或者`interface`类型
+
+    ```kotlin
+    interface KotlinInterface
+    class KotlinClass
+    ```
+
+    转成Java代码是：
+
+    ```java
+    @Metadata(
+       ......
+       k = 1,
+    	 ......
+    )
+    public interface KotlinInterface {
+    }
+    
+    @Metadata(
+    	 ......
+       k = 1,
+       ......
+    )
+    public final class KotlinClass {
+    }
+    ```
+
+  * 2：File表示这是一个以`.kt`结尾的`kotlin`文件
+
+    ```koltin
+    const val TAG = "TAG"
+    ```
+
+    ```java
+    @Metadata(
+    	 ......
+       k = 2,
+       ......
+    )
+    public final class DataKt {
+       @NotNull
+       public static final String TAG = "TAG";
+    }
+    ```
+
+  * 3：Synthetic class表示这这是一个kotlin合成类
+
+  * 4：Multi-file class facade
+
+  * 5：Multi-file class part
+
+* **metadataVersion**：简称`mv`，表示metadata的版本号，如：
+
+  ```java
+  mv = {1, 1, 15},
   ```
 
-  从源码中可以看出，这个注解是专属于`kotlin`的（java是没有这个注解的），metadata属于`运行时注解`而且是针对`class`的注解；为了减少字符串所占的长度为每个属性设置了`JvmName`简称，下面来看下每个属性都是代表什么含义。
+  表示metadata的版本号是：**1.1.15**
 
-  * **kind**：简称`k`，Int类型，表示kotlin文件的类型
+* **bytecodeVersion**：简称`bv`，表示字节码的版本号，如：
 
-    * 1：Class表示`class`或者`interface`类型
+  ```java
+  bv = {1, 0, 3},
+  ```
 
-      ```kotlin
-      interface KotlinInterface
-      class KotlinClass
-      ```
+  表示字节码版本号是：**1.0.3**
 
-      转成Java代码是：
+* **data1**：简称`d1`，主要记录kotlin的语法信息
 
-      ```java
-      @Metadata(
-         ......
-         k = 1,
-      	 ......
-      )
-      public interface KotlinInterface {
+* **data2**：简称`d2`，主要记录kotlin的语法信息
+
+* **extraString**：简称`xs`，主要是为多文件的类(Multi-file class)预留的名称
+
+* **packageName**：简称`pn`，主要记录kotlin类完整的包名，从kotlin1.2之后才有该属性
+
+* **extraInt**：简称`xi`，表示一下flags：
+
+  * 0：表示一个多文件的类Multi-file class facade或者多文件类的部分Multi-file class part编译成-Xmultifile-parts-inherit
+  * 1：表示此类文件由Kotlin的预发行版本编译，并且对于发行版本不可见
+  * 2：表示这个类文件是一个编译的Kotlin脚本源文件
+
+
+
+#### 2.2  class的构造函数
+
+* **主构造函数**
+
+  ```kotlin
+  class KotlinClass(
+      p1: String,
+      p2: String,
+      var p3: String,
+      val p4: String,
+      private var p5: String,
+      private val p6: String
+  ) {
+      private var merge: String? = null
+      init {
+          merge = p1 + p2
       }
-      
-      @Metadata(
-      	 ......
-         k = 1,
-         ......
-      )
-      public final class KotlinClass {
+      fun f() {
+  //        p1，p2 无法访问
+  //        //p3，p6 无法赋值
+  //        p4，p5 正常赋值
       }
-      ```
+  }
+  ```
 
-    * 2：File表示这是一个以`.kt`结尾的`kotlin`文件
+  `kotlin`的构造函数放在头部，下面来看看每个参数的不同定义方式的区别：
 
-      ```koltin
-      const val TAG = "TAG"
-      ```
+  * 未加修饰符的参数：只能在`init`中访问，如上面的p1和p2
 
-      ```java
-      @Metadata(
-      	 ......
-         k = 2,
-         ......
-      )
-      public final class DataKt {
-         @NotNull
-         public static final String TAG = "TAG";
-      }
-      ```
-
-    * 3：Synthetic class表示这这是一个kotlin合成类
-
-    * 4：Multi-file class facade
-
-    * 5：Multi-file class part
-
-  * **metadataVersion**：简称`mv`，表示metadata的版本号，如：
-
-    ```java
-    mv = {1, 1, 15},
-    ```
-
-    表示metadata的版本号是：**1.1.15**
-
-  * **bytecodeVersion**：简称`bv`，表示字节码的版本号，如：
-
-    ```java
-    bv = {1, 0, 3},
-    ```
-
-    表示字节码版本号是：**1.0.3**
-
-  * **data1**：简称`d1`，主要记录kotlin的语法信息
-
-  * **data2**：简称`d2`，主要记录kotlin的语法信息
-
-  * **extraString**：简称`xs`，主要是为多文件的类(Multi-file class)预留的名称
-
-  * **packageName**：简称`pn`，主要记录kotlin类完整的包名，从kotlin1.2之后才有该属性
-
-  * **extraInt**：简称`xi`，表示一下flags：
-
-    * 0：表示一个多文件的类Multi-file class facade或者多文件类的部分Multi-file class part编译成-Xmultifile-parts-inherit
-    * 1：表示此类文件由Kotlin的预发行版本编译，并且对于发行版本不可见
-    * 2：表示这个类文件是一个编译的Kotlin脚本源文件
-
-  
-
-  #### 2.2  class的构造函数
-
-  * **主构造函数**
+  * 未添加`private`修饰符的参数：除了能在类内部使用，还能在实例化之后访问，如p3，p4
 
     ```kotlin
-    class KotlinClass(
-        p1: String,
-        p2: String,
-        var p3: String,
-        val p4: String,
-        private var p5: String,
-        private val p6: String
-    ) {
-        private var merge: String? = null
-        init {
-            merge = p1 + p2
-        }
-        fun f() {
-    //        p1，p2 无法访问
-    //        //p3，p6 无法赋值
-    //        p4，p5 正常赋值
-        }
-    }
+    val kotlinClass = KotlinClass("p1", "p2", "p3", "p4", "p5", "p6")
+    kotlinClass.p3 = "aaa"
+    //kotlinClass.p4 = "bbb" 只能get，不能set赋值
     ```
 
-    `kotlin`的构造函数放在头部，下面来看看每个参数的不同定义方式的区别：
+    * **`var`**：可变的变量
+    * **`val`**：不可变的变量
 
-    * 未加修饰符的参数：只能在`init`中访问，如上面的p1和p2
+  * 添加了`private`修饰符的参数：只能在类内部使用
 
-    * 未添加`private`修饰符的参数：除了能在类内部使用，还能在实例化之后访问，如p3，p4
+* **次级构造函数**
 
-      ```kotlin
-      val kotlinClass = KotlinClass("p1", "p2", "p3", "p4", "p5", "p6")
-      kotlinClass.p3 = "aaa"
-      //kotlinClass.p4 = "bbb" 只能get，不能set赋值
-      ```
+  > 一个类当然会有多个构造函数的可能，只有主构造函数可以写在类头中，其他的次级构造函数(Secondary Constructors)就需要写在类体中了
 
-      * **`var`**：可变的变量
-      * **`val`**：不可变的变量
+  ```kotlin
+  class KotlinClass2(var p1:String){
+      private var p2:String? = null
+      constructor(p1: String,p2: String):this(p1){
+          this.p2 = p2
+      }
+  }
+  ```
 
-    * 添加了`private`修饰符的参数：只能在类内部使用
+  `注意p2没有修饰符`
 
-  * **次级构造函数**
+* **带默认值的构造函数**
 
-    > 一个类当然会有多个构造函数的可能，只有主构造函数可以写在类头中，其他的次级构造函数(Secondary Constructors)就需要写在类体中了
-
-    ```kotlin
-    class KotlinClass2(var p1:String){
-        private var p2:String? = null
-        constructor(p1: String,p2: String):this(p1){
-            this.p2 = p2
-        }
-    }
-    ```
-
-    `注意p2没有修饰符`
-
-  * **带默认值的构造函数**
-
-    ```kotlin
-    class KotlinClass3(var p1:String="a")
-    //实例化时有三种方式
-    fun main(args: Array<String>) {
-        KotlinClass3()
-        KotlinClass3("")
-        KotlinClass3(p1 = "")
-    }
-    ```
+  ```kotlin
+  class KotlinClass3(var p1:String="a")
+  //实例化时有三种方式
+  fun main(args: Array<String>) {
+      KotlinClass3()
+      KotlinClass3("")
+      KotlinClass3(p1 = "")
+  }
+  ```
 
 ### 三、class的修饰符
 

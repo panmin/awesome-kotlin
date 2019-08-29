@@ -18,7 +18,6 @@ class KotlinClass(
     }
 
 
-
     fun f() {
 //        p1，p2 无法访问
 //        //p3，p6 无法赋值
@@ -32,23 +31,34 @@ fun main(args: Array<String>) {
     kotlinClass.p3 = "aaa"
     //kotlinClass.p4 = "bbb"
 
-    KotlinClass2("a","b")
+    KotlinClass2("a", "b")
     KotlinClass3()
     KotlinClass3("")
-    KotlinClass3(p1 = "")
+    val kotlinClass3 = KotlinClass3(p1 = "")
+    //val m = MouseClickHandler
 }
 
 
-class KotlinClass2(var p1:String){
-    private var p2:String? = null
-    constructor(p1: String,p2: String):this(p1){
+class KotlinClass2(var p1: String) {
+    private var p2: String? = null
+
+    constructor(p1: String, p2: String) : this(p1) {
         this.p2 = p2
     }
 }
 
-class KotlinClass3(var p1:String="a")
+class KotlinClass3(var p1: String = "a")
 
 
-fun Activity.show(msg:String,duration: Int = Toast.LENGTH_SHORT){
+fun Activity.show(msg: String, duration: Int = Toast.LENGTH_SHORT) {
     Toast.makeText(this, msg, duration).show()
 }
+
+object ObjectClass {}
+
+enum class Color { RED, GREEN }
+enum class Status { NormalStatus, UnNormalStatus }
+
+
+typealias MouseClickHandler = (Any, KotlinClass) -> Unit
+typealias PersonIndex = Map<String, KotlinClass3>
